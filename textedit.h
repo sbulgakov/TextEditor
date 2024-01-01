@@ -14,6 +14,9 @@ class TextEdit : public QWidget
 public:
     TextEdit(QWidget *parent = 0);
    ~TextEdit();
+    
+protected:
+    void resizeEvent(QResizeEvent *event);
 };
 
 #endif // TEXTEDIT_H
