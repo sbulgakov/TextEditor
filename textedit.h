@@ -15,6 +15,10 @@ public:
     TextEdit(QWidget *parent = 0);
    ~TextEdit();
     
+public slots:
+    void Open(const QString& fileName);
+    void Save(const QString& fileName);
+    
 protected:
     void resizeEvent(QResizeEvent *event);
 };
