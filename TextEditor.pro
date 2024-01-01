@@ -9,3 +9,6 @@ SOURCES += main.cpp \
 
 HEADERS += \
     textedit.h
+
+RESOURCES += \
+    icons.qrc
