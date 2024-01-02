@@ -15,44 +15,50 @@ TextEdit::~TextEdit()
 
 }
 
-void TextEdit::Open(const QString& fileName)
+bool TextEdit::Open(const QString& fileName)
 {
   edit->clear();
   
   if( fileName != "" )
   {
     QFile file(fileName);
-    if(!file.open(QIODevice::ReadOnly|QIODevice::Text))
+    QFile::OpenMode mode(QIODevice::ReadOnly);
+    if(!file.open(mode))
     {
       QMessageBox::critical(this, tr("Error"),
         tr("Unable to open file."));
-      return;
+      return false;
     }
     
     QTextStream in(&file);
+    in.setCodec("UTF-8");
     edit->setPlainText(in.readAll());
     
     file.close();
   }
+  return true;
 }
 
-void TextEdit::Save(const QString& fileName)
+bool TextEdit::Save(const QString& fileName)
 {
     if( fileName != "" )
     {
       QFile file(fileName);
-      if(!file.open(QIODevice::WriteOnly|QIODevice::Text))
+      QFile::OpenMode mode(QIODevice::WriteOnly);
+      if(!file.open(mode))
       {
         QMessageBox::critical(this, tr("Error"),
           tr("Unable to open file."));
-        return;
+        return false;
       }
       
       QTextStream out(&file);
+      out.setCodec("UTF-8");
       out << edit->toPlainText();
       
       file.close();
     }
+    return true;
 }
 
 void TextEdit::resizeEvent(QResizeEvent *event)

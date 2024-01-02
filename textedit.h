@@ -16,8 +16,8 @@ public:
    ~TextEdit();
     
 public slots:
-    void Open(const QString& fileName);
-    void Save(const QString& fileName);
+    bool Open(const QString& fileName);
+    bool Save(const QString& fileName);
     
 protected:
     void resizeEvent(QResizeEvent *event);
