@@ -32,6 +32,8 @@ private slots:
     void updateLineNumbers(int val);
     void updateLineNumbers();
     
+    void highlightCurrentLine();
+
 protected:
     void resizeEvent(QResizeEvent *event);
 };

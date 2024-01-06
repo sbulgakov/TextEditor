@@ -54,6 +54,20 @@ TextEdit::TextEdit(QWidget *parent) : QWidget(parent),
 #else
           QOverload<>::of(&TextEdit::updateLineNumbers));
 #endif
+  
+  connect(edit,
+#if (QT_VERSION < QT_VERSION_CHECK(5,0,0))
+          SIGNAL(cursorPositionChanged()),
+#else
+          &QPlainTextEdit::cursorPositionChanged,
+#endif
+          this,
+#if (QT_VERSION < QT_VERSION_CHECK(5,0,0))
+          SLOT(highlightCurrentLine()));
+#else
+          &QPlainTextEdit::highlightCurrentLine);
+#endif
+  highlightCurrentLine();
 }
 
 TextEdit::~TextEdit()
@@ -196,6 +210,26 @@ void TextEdit::updateLineNumbers()
   {
     updateLineNumbers(edit->verticalScrollBar()->value());
   }
+}
+
+void TextEdit::highlightCurrentLine()
+{
+  QList<QTextEdit::ExtraSelection> extraSelections;
+  
+  if (!edit->isReadOnly())
+  {
+    QTextEdit::ExtraSelection selection;
+    
+    QColor lineColor = QColor(Qt::lightGray).lighter(125);
+    
+    selection.format.setBackground(lineColor);
+    selection.format.setProperty(QTextFormat::FullWidthSelection, true);
+    selection.cursor = edit->textCursor();
+    selection.cursor.clearSelection();
+    extraSelections.append(selection);
+  }
+  
+  edit->setExtraSelections(extraSelections);
 }
 
 void TextEdit::resizeEvent(QResizeEvent *event)
