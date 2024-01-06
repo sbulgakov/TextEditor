@@ -20,6 +20,9 @@ class MainWindow : public QMainWindow
     QAction *fileActSaveAs;
     QAction *fileActExit;
     
+    QMenu   *helpMenu;
+    QAction *helpActAbout;
+    
 public:
     MainWindow(QWidget *parent = 0);
    ~MainWindow();
@@ -29,6 +32,7 @@ private slots:
     void fileOpen();
     void fileSave();
     void fileSaveAs();
+    void helpAbout();
 };
 
 #endif // MAINWINDOW_H

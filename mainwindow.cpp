@@ -5,6 +5,8 @@
 #include <QMenuBar>
 #include <QApplication>
 #include <QFileDialog>
+#include <QMessageBox>
+#include <QPixmap>
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 {
@@ -61,6 +63,16 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     &QApplication::quit
 #endif
     );
+  
+  helpMenu = menuBar()->addMenu(tr("&Help"));
+  helpActAbout  = helpMenu->addAction(tr("&About"),
+    this,
+#if (QT_VERSION < QT_VERSION_CHECK(5,0,0))
+    SLOT(helpAbout())
+#else
+    &MainWindow::helpAbout
+#endif
+    );
 }
 
 MainWindow::~MainWindow()
@@ -110,4 +122,33 @@ void MainWindow::fileSaveAs()
     filePath.remove(QRegExp(fileName+"$"));
     setWindowTitle(fileName + QString(" - TextEditor"));
   }
+}
+
+void MainWindow::helpAbout()
+{
+  QMessageBox about;
+  
+  about.setTextFormat(Qt::RichText);
+#if (QT_VERSION >= QT_VERSION_CHECK(5,1,0))
+  about.setTextInteractionFlags(Qt::NoTextInteraction|Qt::LinksAccessibleByMouse);
+#endif
+  about.setIconPixmap(QPixmap(":/images/icon.png"));
+  about.setWindowTitle(tr("About TextEditor"));
+  about.setText(
+#if (QT_VERSION < QT_VERSION_CHECK(5,0,0)) && defined (Q_OS_WIN)
+    trUtf8(
+#else
+    tr(
+#endif
+      "TextEditor is a simple application for editing text documents.<br/>"
+      "<br/>"
+      "\u00A9 2024 Stanislav Bulgakov<br/>"
+      "<br/>"
+      "Distributed freely under <a href='www.opensource.org/license/mit/'>The MIT License</a>.<br/>"
+      "<br/>"
+      "<a href='www.qt.io'>Qt application framework</a> by The Qt company."
+      )
+  );
+  
+  about.exec();
 }
