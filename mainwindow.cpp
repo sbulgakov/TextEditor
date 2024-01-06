@@ -143,10 +143,11 @@ void MainWindow::helpAbout()
       "TextEditor is a simple application for editing text documents.<br/>"
       "<br/>"
       "\u00A9 2024 Stanislav Bulgakov<br/>"
+      "" GIT_TAG " (" __DATE__ " " __TIME__ ")<br/>"
       "<br/>"
       "Distributed freely under <a href='www.opensource.org/license/mit/'>The MIT License</a>.<br/>"
       "<br/>"
-      "<a href='www.qt.io'>Qt application framework</a> by The Qt company."
+      "<a href='www.qt.io'>Qt application framework</a> v" QT_VERSION_STR " by The Qt company."
       )
   );
   
