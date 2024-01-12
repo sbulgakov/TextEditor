@@ -6,6 +6,11 @@
 class QPlainTextEdit;
 
 class LineNumbers;
+class FindDialog;
+#ifdef FINDDIALOG_RESULTS
+class FindResults;
+#endif
+class QTextCursor;
 
 class TextEdit : public QWidget
 {
@@ -16,6 +21,11 @@ class TextEdit : public QWidget
     int pos;
     int blockCount;
     
+    FindDialog  *findDialog;
+#ifdef FINDDIALOG_RESULTS
+    FindResults *findResults;
+#endif
+    
 public:
     TextEdit(QWidget *parent = 0);
    ~TextEdit();
@@ -25,6 +35,14 @@ public:
 public slots:
     bool Open(const QString& fileName);
     bool Save(const QString& fileName);
+    
+    bool Find(const QString& str);
+    void showFindDialog();
+#ifdef FINDDIALOG_RESULTS
+    FindResults* getFindResults();
+#endif
+    
+    void setTextCursor(const QTextCursor &cursor);
     
 private slots:
     void updateLineNumbersWidth(int newBlockCount);

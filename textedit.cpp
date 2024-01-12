@@ -7,8 +7,14 @@
 #include <QTextStream>
 #include <QPainter>
 
+#include "finddialog.h"
+
 TextEdit::TextEdit(QWidget *parent) : QWidget(parent),
-  pos(0), blockCount(0)
+  pos(0), blockCount(0),
+  findDialog(0)
+#ifdef FINDDIALOG_RESULTS
+  , findResults(0)
+#endif
 {
   edit = new QPlainTextEdit(this);
   edit->setLineWrapMode(QPlainTextEdit::NoWrap);
@@ -65,7 +71,7 @@ TextEdit::TextEdit(QWidget *parent) : QWidget(parent),
 #if (QT_VERSION < QT_VERSION_CHECK(5,0,0))
           SLOT(highlightCurrentLine()));
 #else
-          &QPlainTextEdit::highlightCurrentLine);
+          &TextEdit::highlightCurrentLine);
 #endif
   highlightCurrentLine();
 }
@@ -113,6 +119,7 @@ bool TextEdit::Open(const QString& fileName)
     QTextStream in(&file);
     in.setCodec("UTF-8");
     edit->setPlainText(in.readAll());
+    edit->setDocumentTitle(fileName);
     
     file.close();
     
@@ -139,11 +146,121 @@ bool TextEdit::Save(const QString& fileName)
       QTextStream out(&file);
       out.setCodec("UTF-8");
       out << edit->toPlainText();
+      edit->setDocumentTitle(fileName);
       
       file.close();
     }
     return true;
 }
+
+bool TextEdit::Find(const QString& str)
+{
+  if(!str.isEmpty())
+  {
+    QTextDocument::FindFlags flags = 0;
+    bool regex = false;
+#ifdef FINDDIALOG_ALL
+    bool every = false;
+#endif
+    if(findDialog)
+    {
+      if(findDialog->isBackward())      flags |= QTextDocument::FindBackward;
+      if(findDialog->isCaseSensitive()) flags |= QTextDocument::FindCaseSensitively;
+      if(findDialog->isWholeWords())    flags |= QTextDocument::FindWholeWords;
+      if(findDialog->isRegex())         regex  = true;
+#ifdef FINDDIALOG_ALL
+      if(findDialog->isAll())           every  = true;
+#endif
+    }
+    
+    QTextCursor  c;
+    if(!regex)   c = edit->document()->find(str,  edit->textCursor(), flags);
+    else c = edit->document()->find(QRegExp(str), edit->textCursor(), flags);
+    
+    if (!c.isNull())
+    {
+      edit->setTextCursor(c);
+      
+#if (defined FINDDIALOG_RESULTS) && (defined FINDDIALOG_ALL)
+      if(findResults && every)
+      {
+        findResults->show();
+        findResults->activateWindow();
+        
+        do
+        {
+          findResults->insert(c);
+          
+          if(!regex)   c = edit->document()->find(str,  c, flags);
+          else c = edit->document()->find(QRegExp(str), c, flags);
+        }
+        while(!c.isNull());
+      }
+#endif // FINDDIALOG_RESULTS && FINDDIALOG_ALL
+      
+      return true;
+    }
+  }
+  
+  return false;
+}
+
+void TextEdit::showFindDialog()
+{
+  if(!findDialog)
+  {
+    findDialog = new FindDialog(this);
+    connect(findDialog,
+#if (QT_VERSION < QT_VERSION_CHECK(5,0,0))
+            SIGNAL(find(const QString&)),
+#else
+            &FindDialog::find,
+#endif
+            this,
+#if (QT_VERSION < QT_VERSION_CHECK(5,0,0))
+            SLOT(Find(const QString&)));
+#else
+            &TextEdit::Find);
+#endif
+  }
+  findDialog->show();
+  findDialog->activateWindow();
+}
+
+void TextEdit::setTextCursor(const QTextCursor &cursor)
+{
+  edit->setCenterOnScroll(true);
+  edit->setTextCursor(cursor);
+  edit->setCenterOnScroll(false);
+  
+  edit->show();
+  edit->activateWindow();
+  edit->setFocus();
+}
+
+#ifdef FINDDIALOG_RESULTS
+FindResults* TextEdit::getFindResults()
+{
+  if(!findResults)
+  {
+    findResults = new FindResults(this);
+    connect(findResults,
+#if (QT_VERSION < QT_VERSION_CHECK(5,0,0))
+            SIGNAL(itemClicked(const QTextCursor&)),
+#else
+            &FindResults::itemClicked,
+#endif
+            this,
+#if (QT_VERSION < QT_VERSION_CHECK(5,0,0))
+            SLOT(setTextCursor(const QTextCursor&)));
+#else
+            &TextEdit::setTextCursor);
+#endif
+  }
+  
+  return findResults;
+}
+#endif // FINDDIALOG_RESULTS
 
 void TextEdit::updateLineNumbersWidth(int newBlockCount)
 {

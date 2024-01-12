@@ -20,6 +20,9 @@ class MainWindow : public QMainWindow
     QAction *fileActSaveAs;
     QAction *fileActExit;
     
+    QMenu   *editMenu;
+    QAction *editActFind;
+    
     QMenu   *helpMenu;
     QAction *helpActAbout;
     
@@ -32,6 +35,7 @@ private slots:
     void fileOpen();
     void fileSave();
     void fileSaveAs();
+    void editFind();
     void helpAbout();
 };
 

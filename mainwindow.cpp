@@ -1,9 +1,13 @@
 #include "mainwindow.h"
 
 #include "textedit.h"
+#ifdef FINDDIALOG_RESULTS
+#include "finddialog.h"
+#endif
 
 #include <QMenuBar>
 #include <QApplication>
+#include <QDockWidget>
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QPixmap>
@@ -64,6 +68,17 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 #endif
     );
   
+  editMenu = menuBar()->addMenu(tr("&Edit"));
+  editActFind  = editMenu->addAction(tr("&Find"),
+    this,
+#if (QT_VERSION < QT_VERSION_CHECK(5,0,0))
+    SLOT(editFind()),
+#else
+    &MainWindow::editFind,
+#endif
+    QKeySequence::Find
+    );
+  
   helpMenu = menuBar()->addMenu(tr("&Help"));
   helpActAbout  = helpMenu->addAction(tr("&About"),
     this,
@@ -73,6 +88,28 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     &MainWindow::helpAbout
 #endif
     );
+  
+#ifdef FINDDIALOG_RESULTS
+  FindResults *findResults = textEdit->getFindResults();
+  QDockWidget *dock = new QDockWidget(this);
+  dock->setAllowedAreas(Qt::TopDockWidgetArea);
+  dock->setWidget(findResults);
+  dock->setWindowTitle(findResults->windowTitle());
+  connect(findResults,
+#if (QT_VERSION < QT_VERSION_CHECK(5,0,0))
+          SIGNAL(visibilityChanged(bool)),
+#else
+          &FindResults::visibilityChanged,
+#endif
+          dock,
+#if (QT_VERSION < QT_VERSION_CHECK(5,0,0))
+          SLOT(setVisible(bool)));
+#else
+          &QDockWidget::setVisible);
+#endif
+  addDockWidget(Qt::TopDockWidgetArea, dock);
+  dock->setVisible(false);
+#endif // FINDDIALOG_RESULTS
 }
 
 MainWindow::~MainWindow()
@@ -122,6 +159,11 @@ void MainWindow::fileSaveAs()
     filePath.remove(QRegExp(fileName+"$"));
     setWindowTitle(fileName + QString(" - TextEditor"));
   }
+}
+
+void MainWindow::editFind()
+{
+  textEdit->showFindDialog();
 }
 
 void MainWindow::helpAbout()
