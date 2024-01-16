@@ -205,6 +205,83 @@ bool TextEdit::Find(const QString& str)
   return false;
 }
 
+#ifdef FINDDIALOG_REPLACE
+bool TextEdit::Replace(const QString& str, const QString& with)
+{
+  if(!str.isEmpty())
+  {
+    QTextDocument::FindFlags flags = 0;
+    bool regex = false;
+    bool every = false;
+    if(findDialog)
+    {
+      if(findDialog->isBackward())      flags |= QTextDocument::FindBackward;
+      if(findDialog->isCaseSensitive()) flags |= QTextDocument::FindCaseSensitively;
+      if(findDialog->isWholeWords())    flags |= QTextDocument::FindWholeWords;
+      if(findDialog->isRegex())         regex  = true;
+      if(findDialog->isReplaceAll())    every  = true;
+    }
+    
+    QTextCursor  from = edit->textCursor();
+    if(every)    from.setPosition(0);
+    
+    QTextCursor  c;
+    if(!regex)   c = edit->document()->find(str,  from, flags);
+    else c = edit->document()->find(QRegExp(str), from, flags);
+    
+    if (!c.isNull())
+    {
+      int beg = c.selectionStart();
+      int end ;
+      
+      if(!regex) c.insertText(with);
+      else
+      {
+        QString text = c.selectedText();
+        text.replace(QRegExp(str), with);
+        c.insertText(text);
+      }
+      end = c.position();
+      
+      c.setPosition(beg);
+      c.setPosition(end, QTextCursor::KeepAnchor);
+      edit->setTextCursor(c);
+      
+      if(every)
+      {
+        while(!c.isNull())
+        {
+          if(!regex)   c = edit->document()->find(str,  c, flags);
+          else c = edit->document()->find(QRegExp(str), c, flags);
+          
+          if(!c.isNull())
+          {
+            beg = c.selectionStart();
+            
+            if(!regex) c.insertText(with);
+            else
+            {
+              QString text = c.selectedText();
+              text.replace(QRegExp(str), with);
+              c.insertText(text);
+            }
+            end = c.position();
+            
+            c.setPosition(beg);
+            c.setPosition(end, QTextCursor::KeepAnchor);
+            edit->setTextCursor(c);
+          }
+        }
+      }
+      
+      return true;
+    }
+  }
+  
+  return false;
+}
+#endif // FINDDIALOG_REPLACE
+
 void TextEdit::showFindDialog()
 {
   if(!findDialog)
@@ -222,10 +299,38 @@ void TextEdit::showFindDialog()
 #else
             &TextEdit::Find);
 #endif
+    
+#ifdef FINDDIALOG_REPLACE
+    connect(findDialog,
+#if (QT_VERSION < QT_VERSION_CHECK(5,0,0))
+            SIGNAL(replace(const QString&,const QString&)),
+#else
+            &FindDialog::replace,
+#endif
+            this,
+#if (QT_VERSION < QT_VERSION_CHECK(5,0,0))
+            SLOT(Replace(const QString&,const QString&)));
+#else
+            &TextEdit::Replace);
+#endif
+#endif // FINDDIALOG_REPLACE
   }
   findDialog->show();
   findDialog->activateWindow();
+  findDialog->setFocus();
+  
+#ifdef FINDDIALOG_REPLACE
+  findDialog->setReplaceMode(false);
+#endif
 }
+
+#ifdef FINDDIALOG_REPLACE
+void TextEdit::showReplaceDialog()
+{
+  showFindDialog();
+  findDialog->setReplaceMode(true);
+}
+#endif
 
 void TextEdit::setTextCursor(const QTextCursor &cursor)
 {

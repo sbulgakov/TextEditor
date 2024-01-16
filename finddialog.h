@@ -12,7 +12,12 @@ class FindDialog : public QDialog
     Q_OBJECT
     
     QLabel    *label;
+    QLabel    *dummy;
     QLineEdit *edit;
+#ifdef FINDDIALOG_REPLACE
+    QLabel    *with;
+    QLineEdit *text;
+#endif
     
     QCheckBox *backCheck;
 #ifdef FINDDIALOG_ALL
@@ -23,7 +28,19 @@ class FindDialog : public QDialog
     QCheckBox *regexCheck;
     
     QPushButton *findButton;
+#ifdef FINDDIALOG_REPLACE
+    QPushButton *replaceButton;
+    QPushButton *replaceAllButton;
+    QLabel      *spacer;
+#endif
     QPushButton *closeButton;
+    
+#ifdef FINDDIALOG_REPLACE
+    bool replaceAll;
+    bool replaceDialog;
+    
+    QSize findSize;
+#endif
     
 public:
     FindDialog(QWidget *parent = 0);
@@ -36,11 +53,28 @@ public:
     bool isWholeWords();
     bool isRegex();
     
+#ifdef FINDDIALOG_REPLACE
+    bool isReplace();
+    bool isReplaceAll();
+#endif
+    
 signals:
     void find(const QString &str);
+#ifdef FINDDIALOG_REPLACE
+    void replace(const QString &str, const QString &with);
+#endif
+    
+#ifdef FINDDIALOG_REPLACE
+public slots:
+    void setReplaceMode(bool on);
+#endif
     
 private slots:
     void findClicked();
+#ifdef FINDDIALOG_REPLACE
+    void replaceClicked();
+    void replaceAllClicked();
+#endif
 };
 
 //--------------------------------------------------------------------

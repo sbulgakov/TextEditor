@@ -78,6 +78,17 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 #endif
     QKeySequence::Find
     );
+#ifdef FINDDIALOG_REPLACE
+    editActReplace = editMenu->addAction(tr("&Replace"),
+      this,
+  #if (QT_VERSION < QT_VERSION_CHECK(5,0,0))
+      SLOT(editReplace()),
+  #else
+      &MainWindow::editReplace,
+  #endif
+      QKeySequence::Replace
+      );
+#endif
   
   helpMenu = menuBar()->addMenu(tr("&Help"));
   helpActAbout  = helpMenu->addAction(tr("&About"),
@@ -165,6 +176,13 @@ void MainWindow::editFind()
 {
   textEdit->showFindDialog();
 }
+
+#ifdef FINDDIALOG_REPLACE
+void MainWindow::editReplace()
+{
+  textEdit->showReplaceDialog();
+}
+#endif
 
 void MainWindow::helpAbout()
 {

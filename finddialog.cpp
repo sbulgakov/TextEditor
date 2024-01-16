@@ -10,14 +10,28 @@
 
 FindDialog::FindDialog(QWidget *parent) :
     QDialog(parent, Qt::WindowSystemMenuHint|Qt::WindowTitleHint)
+#ifdef FINDDIALOG_REPLACE
+  , replaceAll(false), replaceDialog(false)
+#endif
 {
   label = new QLabel(tr("Find:"),this);
   label->adjustSize();
   
-  QLabel *dummy = new QLabel(this);
+  dummy = new QLabel(this);
   dummy->setMinimumSize(label->size());
   
   edit  = new QLineEdit(this);
+  
+#ifdef FINDDIALOG_REPLACE
+  with = new QLabel(tr("Replace:"),this);
+  with->adjustSize();
+  with->setMinimumSize(with->size());
+  with->setText(tr("With:"));
+  with->setVisible(false);
+  
+  text = new QLineEdit(this);
+  text->setVisible(false);
+#endif
   
   backCheck  = new QCheckBox(tr("Find backwards"),this);
   
@@ -34,11 +48,24 @@ FindDialog::FindDialog(QWidget *parent) :
   findButton  = new QPushButton(tr("Find"),this);
   findButton->setDefault(true);
   
+#ifdef FINDDIALOG_REPLACE
+  replaceButton    = new QPushButton(tr("Replace"),this);
+  replaceButton->setVisible(false);
+  replaceAllButton = new QPushButton(tr("Replace All"),this);
+  replaceAllButton->setVisible(false);
+#endif
+  
   closeButton = new QPushButton(tr("Cancel"),this);
   
   QHBoxLayout *find = new QHBoxLayout();
   find->addWidget(label);
   find->addWidget(edit);
+
+#ifdef FINDDIALOG_REPLACE
+  QHBoxLayout *repl = new QHBoxLayout();
+  repl->addWidget(with);
+  repl->addWidget(text);
+#endif
   
   QGridLayout *checks = new QGridLayout();
   checks->addWidget(backCheck,  0, 0);
@@ -49,9 +76,19 @@ FindDialog::FindDialog(QWidget *parent) :
   checks->addWidget(wholeCheck, 1, 1);
   checks->addWidget(regexCheck, 2, 1);
   checks->addItem(new QSpacerItem(25, 10), 0, 2);
+#ifdef FINDDIALOG_REPLACE
+  spacer = new QLabel(this);
+  spacer->setMinimumSize(25, 10);
+  checks->addWidget(spacer, 3, 2);
+  spacer->setVisible(false);
+#endif
   
   QVBoxLayout *buttons = new QVBoxLayout();
   buttons->addWidget(findButton);
+#ifdef FINDDIALOG_REPLACE
+  buttons->addWidget(replaceButton);
+  buttons->addWidget(replaceAllButton);
+#endif
   buttons->addWidget(closeButton);
   buttons->addStretch();
   
@@ -62,6 +99,9 @@ FindDialog::FindDialog(QWidget *parent) :
   
   QVBoxLayout *layout = new QVBoxLayout(this);
   layout->addLayout(find);
+#ifdef FINDDIALOG_REPLACE
+  layout->addLayout(repl);
+#endif
   layout->addLayout(controls);
   
   connect(findButton,
@@ -76,6 +116,34 @@ FindDialog::FindDialog(QWidget *parent) :
 #else
           &FindDialog::findClicked);
 #endif
+  
+#ifdef FINDDIALOG_REPLACE
+  connect(replaceButton,
+#if (QT_VERSION < QT_VERSION_CHECK(5,0,0))
+          SIGNAL(clicked()),
+#else
+          &QPushButton::clicked,
+#endif
+          this,
+#if (QT_VERSION < QT_VERSION_CHECK(5,0,0))
+          SLOT(replaceClicked()));
+#else
+          &FindDialog::replaceClicked);
+#endif
+  connect(replaceAllButton,
+#if (QT_VERSION < QT_VERSION_CHECK(5,0,0))
+          SIGNAL(clicked()),
+#else
+          &QPushButton::clicked,
+#endif
+          this,
+#if (QT_VERSION < QT_VERSION_CHECK(5,0,0))
+          SLOT(replaceAllClicked()));
+#else
+          &FindDialog::replaceAllClicked);
+#endif
+#endif // FINDDIALOG_REPLACE
+  
   connect(closeButton,
 #if (QT_VERSION < QT_VERSION_CHECK(5,0,0))
           SIGNAL(clicked()),
@@ -90,8 +158,11 @@ FindDialog::FindDialog(QWidget *parent) :
 #endif
   
   setWindowTitle(tr("Find"));
-  setFixedSize(sizeHint()); 
+  findSize = sizeHint();
+  setFixedSize(findSize);
   setModal(true);
+  
+  setFocusProxy(edit);
 }
 
 bool FindDialog::isBackward()
@@ -121,6 +192,51 @@ bool FindDialog::isRegex()
   return regexCheck->isChecked();
 }
 
+#ifdef FINDDIALOG_REPLACE
+bool FindDialog::isReplace()
+{
+  return replaceDialog;
+}
+
+bool FindDialog::isReplaceAll()
+{
+  return replaceAll;
+}
+
+void FindDialog::setReplaceMode(bool on)
+{
+  if(on) label->setText(tr("Replace:"));
+  else   label->setText(tr("Find:"));
+  label->adjustSize();
+  dummy->setMinimumSize(label->size());
+  
+  with->setVisible(on);
+  text->setVisible(on);
+  
+  allCheck->setVisible(!on);
+  
+  findButton->setVisible(!on);
+  findButton->setDefault(!on);
+  replaceButton->setVisible(on);
+  replaceButton->setDefault(on);
+  replaceAllButton->setVisible(on);
+  spacer->setVisible(on);
+  
+  replaceDialog = on;
+  
+  if(on)
+  {
+    setWindowTitle(tr("Replace"));
+    setFixedSize(sizeHint());
+  }
+  else
+  {
+    setWindowTitle(tr("Find"));
+    setFixedSize(findSize);
+  }
+}
+#endif // FINDDIALOG_REPLACE
+
 void FindDialog::findClicked()
 {
   if(!edit->text().isEmpty())
@@ -130,9 +246,31 @@ void FindDialog::findClicked()
   accept();
 }
 
+#ifdef FINDDIALOG_REPLACE
+void FindDialog::replaceClicked()
+{
+  if(!edit->text().isEmpty())
+  {
+    replaceAll = false;
+    emit replace(edit->text(), text->text());
+  }
+  accept();
+}
+
+void FindDialog::replaceAllClicked()
+{
+  if(!edit->text().isEmpty())
+  {
+    replaceAll = true;
+    emit replace(edit->text(), text->text());
+  }
+  accept();
+}
+#endif
+
 //--------------------------------------------------------------------
 
-#ifdef FINDDIALOG_RESULTS 
+#ifdef FINDDIALOG_RESULTS
 #include <QTableWidget>
 #include <QTextCursor>
 #include <QHeaderView>

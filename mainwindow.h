@@ -22,6 +22,9 @@ class MainWindow : public QMainWindow
     
     QMenu   *editMenu;
     QAction *editActFind;
+#ifdef FINDDIALOG_REPLACE
+    QAction *editActReplace;
+#endif
     
     QMenu   *helpMenu;
     QAction *helpActAbout;
@@ -36,6 +39,9 @@ private slots:
     void fileSave();
     void fileSaveAs();
     void editFind();
+#ifdef FINDDIALOG_REPLACE
+    void editReplace();
+#endif
     void helpAbout();
 };
 

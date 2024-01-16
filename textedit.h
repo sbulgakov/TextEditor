@@ -42,6 +42,11 @@ public slots:
     FindResults* getFindResults();
 #endif
     
+#ifdef FINDDIALOG_REPLACE
+    bool Replace(const QString& str, const QString& with);
+    void showReplaceDialog();
+#endif
+    
     void setTextCursor(const QTextCursor &cursor);
     
 private slots:
