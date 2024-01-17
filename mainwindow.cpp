@@ -23,7 +23,11 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
   filePath = "";
   
   fileMenu = menuBar()->addMenu(tr("&File"));
+#ifdef HAVE_ICONS
+  fileActNew  = fileMenu->addAction(QIcon(":/images/new.png"), tr("&New"),
+#else
   fileActNew  = fileMenu->addAction(tr("&New"),
+#endif
     this,
 #if (QT_VERSION < QT_VERSION_CHECK(5,0,0))
     SLOT(fileNew()),
@@ -32,7 +36,11 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 #endif
     QKeySequence::New
     );
+#ifdef HAVE_ICONS
+  fileActOpen = fileMenu->addAction(QIcon(":/images/open.png"), tr("&Open..."),
+#else
   fileActOpen = fileMenu->addAction(tr("&Open..."),
+#endif
     this,
 #if (QT_VERSION < QT_VERSION_CHECK(5,0,0))
     SLOT(fileOpen()),
@@ -41,7 +49,11 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 #endif
     QKeySequence::Open
     );
+#ifdef HAVE_ICONS
+  fileActSave = fileMenu->addAction(QIcon(":/images/save.png"), tr("&Save"),
+#else
   fileActSave = fileMenu->addAction(tr("&Save"),
+#endif
     this,
 #if (QT_VERSION < QT_VERSION_CHECK(5,0,0))
     SLOT(fileSave()),
@@ -50,7 +62,11 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 #endif
     QKeySequence::Save
     );
+#ifdef HAVE_ICONS
+  fileActSaveAs = fileMenu->addAction(QIcon(":/images/saveas.png"), tr("Save &As"),
+#else
   fileActSaveAs = fileMenu->addAction(tr("Save &As"),
+#endif
     this,
 #if (QT_VERSION < QT_VERSION_CHECK(5,0,0))
     SLOT(fileSaveAs())
@@ -59,7 +75,11 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 #endif
     );
   /* ----- */   fileMenu->addSeparator();
+#ifdef HAVE_ICONS
+  fileActExit = fileMenu->addAction(QIcon(":/images/exit.png"), tr("E&xit"),
+#else
   fileActExit = fileMenu->addAction(tr("E&xit"),
+#endif
     qApp,
 #if (QT_VERSION < QT_VERSION_CHECK(5,0,0))
     SLOT(quit())
@@ -69,7 +89,11 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     );
   
   editMenu = menuBar()->addMenu(tr("&Edit"));
+#ifdef HAVE_ICONS
+  editActFind  = editMenu->addAction(QIcon(":/images/find.png"), tr("&Find"),
+#else
   editActFind  = editMenu->addAction(tr("&Find"),
+#endif
     this,
 #if (QT_VERSION < QT_VERSION_CHECK(5,0,0))
     SLOT(editFind()),
@@ -79,7 +103,11 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     QKeySequence::Find
     );
 #ifdef FINDDIALOG_REPLACE
+#ifdef HAVE_ICONS
+    editActReplace = editMenu->addAction(QIcon(":/images/replace.png"), tr("&Replace"),
+#else
     editActReplace = editMenu->addAction(tr("&Replace"),
+#endif
       this,
   #if (QT_VERSION < QT_VERSION_CHECK(5,0,0))
       SLOT(editReplace()),
@@ -91,7 +119,11 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 #endif
   
   helpMenu = menuBar()->addMenu(tr("&Help"));
+#ifdef HAVE_ICONS
+  helpActAbout  = helpMenu->addAction(QIcon(":/images/about.png"), tr("&About"),
+#else
   helpActAbout  = helpMenu->addAction(tr("&About"),
+#endif
     this,
 #if (QT_VERSION < QT_VERSION_CHECK(5,0,0))
     SLOT(helpAbout())
@@ -195,19 +227,21 @@ void MainWindow::helpAbout()
   about.setIconPixmap(QPixmap(":/images/icon.png"));
   about.setWindowTitle(tr("About TextEditor"));
   about.setText(
-#if (QT_VERSION < QT_VERSION_CHECK(5,0,0)) && defined (Q_OS_WIN)
-    trUtf8(
-#else
     tr(
-#endif
       "TextEditor is a simple application for editing text documents.<br/>"
       "<br/>"
-      "\u00A9 2024 Stanislav Bulgakov<br/>"
+      "&copy; 2024 Stanislav Bulgakov<br/>"
       "" GIT_TAG " (" __DATE__ " " __TIME__ ")<br/>"
       "<br/>"
       "Distributed freely under <a href='www.opensource.org/license/mit/'>The MIT License</a>.<br/>"
       "<br/>"
       "<a href='www.qt.io'>Qt application framework</a> v" QT_VERSION_STR " by The Qt company."
+#ifdef HAVE_ICONS
+      "<br/>"
+      "Some icons used are from "
+        "<a href='www.flaticon.com/authors/super-basic-orbit/outline'>"
+        "Super Basic Orbit Outline</a> style."
+#endif
       )
   );
   

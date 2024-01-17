@@ -24,3 +24,11 @@ HEADERS += \
 
 RESOURCES += \
     icons.qrc
+
+icons {
+    DEFINES += HAVE_ICONS
+    RESOURCES += \
+        icons-file.qrc \
+        icons-find.qrc \
+        icons-help.qrc
+}
