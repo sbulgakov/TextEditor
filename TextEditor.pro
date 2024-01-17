@@ -15,6 +15,9 @@ DEFINES += \
     FINDDIALOG_REPLACE \
     FINDDIALOG_RESULTS
 
+DEFINES += \
+    TEXTEDIT_MENU
+
 SOURCES += main.cpp \
     mainwindow.cpp \
     finddialog.cpp \
@@ -32,6 +35,7 @@ icons {
     DEFINES += HAVE_ICONS
     RESOURCES += \
         icons-file.qrc \
+        icons-edit.qrc \
         icons-find.qrc \
         icons-help.qrc
 }

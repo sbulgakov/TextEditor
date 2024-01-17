@@ -88,7 +88,26 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 #endif
     );
   
+#ifdef TEXTEDIT_MENU
+  editMenu = textEdit->createStandardContextMenu();
+  editMenu->setTitle(tr("&Edit"));
+  menuBar()->insertMenu(0,editMenu);
+  connect(editMenu,
+#if (QT_VERSION < QT_VERSION_CHECK(5,0,0))
+          SIGNAL(aboutToShow()),
+#else
+          &QMenu::aboutToShow,
+#endif
+          this,
+#if (QT_VERSION < QT_VERSION_CHECK(5,0,0))
+          SLOT(editMenuUpdate()));
+#else
+          &MainWindow::editMenuUpdate);
+#endif
+  editMenu->addSeparator();
+#else
   editMenu = menuBar()->addMenu(tr("&Edit"));
+#endif // TEXTEDIT_MENU
 #ifdef HAVE_ICONS
   editActFind  = editMenu->addAction(QIcon(":/images/find.png"), tr("&Find"),
 #else
@@ -203,6 +222,13 @@ void MainWindow::fileSaveAs()
     setWindowTitle(fileName + QString(" - TextEditor"));
   }
 }
+
+#ifdef TEXTEDIT_MENU
+void MainWindow::editMenuUpdate()
+{
+  textEdit->updateStandardContextMenu(editMenu);
+}
+#endif
 
 void MainWindow::editFind()
 {

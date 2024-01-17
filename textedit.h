@@ -10,6 +10,10 @@ class FindDialog;
 #ifdef FINDDIALOG_RESULTS
 class FindResults;
 #endif
+#ifdef TEXTEDIT_MENU
+class QMenu;
+class QAction;
+#endif
 class QTextCursor;
 
 class TextEdit : public QWidget
@@ -26,11 +30,30 @@ class TextEdit : public QWidget
     FindResults *findResults;
 #endif
     
+#ifdef TEXTEDIT_MENU
+    QMenu   *editMenu;
+    QAction *editActUndo;
+    QAction *editActRedo;
+    QAction *editActCut;
+    QAction *editActCopy;
+    QAction *editActPaste;
+    QAction *editActDelete;
+    QAction *editActSelectAll;
+    
+    bool undo;
+    bool redo;
+#endif
+    
 public:
     TextEdit(QWidget *parent = 0);
    ~TextEdit();
     
     int lineNumbersWidth() const;
+    
+#ifdef TEXTEDIT_MENU
+    QMenu* createStandardContextMenu();
+    void   updateStandardContextMenu(QMenu *menu);
+#endif
     
 public slots:
     bool Open(const QString& fileName);
@@ -56,9 +79,21 @@ private slots:
     void updateLineNumbers();
     
     void highlightCurrentLine();
+    
+#ifdef TEXTEDIT_MENU
+    void editMenuRequested(const QPoint& pos);
+    void editDelete();
+    void editCanUndo(bool yes);
+    void editCanRedo(bool yes);
+#endif
 
 protected:
     void resizeEvent(QResizeEvent *event);
+    
+#ifdef TEXTEDIT_MENU
+private:
+    void createMenu(QMenu *menu);
+#endif
 };
 
 //--------------------------------------------------------------------

@@ -38,6 +38,9 @@ private slots:
     void fileOpen();
     void fileSave();
     void fileSaveAs();
+#ifdef TEXTEDIT_MENU
+    void editMenuUpdate();
+#endif
     void editFind();
 #ifdef FINDDIALOG_REPLACE
     void editReplace();

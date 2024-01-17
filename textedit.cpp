@@ -9,11 +9,18 @@
 
 #include "finddialog.h"
 
+#ifdef TEXTEDIT_MENU
+#include <QMenu>
+#endif
+
 TextEdit::TextEdit(QWidget *parent) : QWidget(parent),
   pos(0), blockCount(0),
   findDialog(0)
 #ifdef FINDDIALOG_RESULTS
   , findResults(0)
+#endif
+#ifdef TEXTEDIT_MENU
+  , undo(false), redo(false)
 #endif
 {
   edit = new QPlainTextEdit(this);
@@ -73,6 +80,49 @@ TextEdit::TextEdit(QWidget *parent) : QWidget(parent),
 #else
           &TextEdit::highlightCurrentLine);
 #endif
+  
+#ifdef TEXTEDIT_MENU
+  createMenu(0);
+  
+  edit->setContextMenuPolicy(Qt::CustomContextMenu);
+  connect(edit,
+#if (QT_VERSION < QT_VERSION_CHECK(5,0,0))
+          SIGNAL(customContextMenuRequested(const QPoint&)),
+#else
+          &QPlainTextEdit::customContextMenuRequested,
+#endif
+          this,
+#if (QT_VERSION < QT_VERSION_CHECK(5,0,0))
+          SLOT(editMenuRequested(const QPoint&)));
+#else
+          &TextEdit::editMenuRequested);
+#endif
+  connect(edit,
+#if (QT_VERSION < QT_VERSION_CHECK(5,0,0))
+          SIGNAL(undoAvailable(bool)),
+#else
+          &QPlainTextEdit::undoAvailable,
+#endif
+          this,
+#if (QT_VERSION < QT_VERSION_CHECK(5,0,0))
+          SLOT(editCanUndo(bool)));
+#else
+          &TextEdit::editCanUndo);
+#endif
+  connect(edit,
+#if (QT_VERSION < QT_VERSION_CHECK(5,0,0))
+          SIGNAL(redoAvailable(bool)),
+#else
+          &QPlainTextEdit::redoAvailable,
+#endif
+          this,
+#if (QT_VERSION < QT_VERSION_CHECK(5,0,0))
+          SLOT(editCanRedo(bool)));
+#else
+          &TextEdit::editCanRedo);
+#endif
+#endif // TEXTEDIT_MENU
+  
   highlightCurrentLine();
 }
 
@@ -100,6 +150,36 @@ int TextEdit::lineNumbersWidth() const
   
   return wid;
 }
+
+#ifdef TEXTEDIT_MENU
+QMenu* TextEdit::createStandardContextMenu()
+{
+  QMenu *menu = new QMenu();
+  
+  createMenu(menu);
+  
+  return menu;
+}
+
+void TextEdit::updateStandardContextMenu(QMenu *menu)
+{
+  QList<QAction*> acts = menu->actions();
+  
+  bool read   = edit->isReadOnly();
+  bool select = edit->textCursor().hasSelection();
+  bool paste  = edit->canPaste();
+  bool empty  = edit->document()->isEmpty();
+  
+  acts.at(0)->setEnabled(!read && undo);   //editActUndo
+  acts.at(1)->setEnabled(!read && redo);   //editActRedo
+  //separator
+  acts.at(3)->setEnabled(!read && select); //editActCut
+  acts.at(4)->setEnabled(select);          //editActCopy
+  acts.at(5)->setEnabled(!read && paste);  //editActPaste
+  acts.at(6)->setEnabled(!read && select); //editActDelete
+  acts.at(7)->setEnabled(!empty);          //editActSelectAll
+}
+#endif
 
 bool TextEdit::Open(const QString& fileName)
 {
@@ -454,6 +534,32 @@ void TextEdit::highlightCurrentLine()
   edit->setExtraSelections(extraSelections);
 }
 
+#ifdef TEXTEDIT_MENU
+void TextEdit::editMenuRequested(const QPoint& pos)
+{
+  updateStandardContextMenu(editMenu);
+  
+  QPoint p = mapToGlobal(pos);
+  p.setX(p.x()+lineNumbers->width());
+  editMenu->exec(p);
+}
+
+void TextEdit::editDelete()
+{
+  edit->textCursor().insertText("");
+}
+
+void TextEdit::editCanUndo(bool yes)
+{
+  undo = yes;
+}
+
+void TextEdit::editCanRedo(bool yes)
+{
+  redo = yes;
+}
+#endif // TEXTEDIT_MENU
+
 void TextEdit::resizeEvent(QResizeEvent *event)
 {
   int wid = lineNumbersWidth();
@@ -464,6 +570,130 @@ void TextEdit::resizeEvent(QResizeEvent *event)
   edit->move(wid,0);
   lineNumbers->resize(wid,size.height());
 }
+
+#ifdef TEXTEDIT_MENU
+void TextEdit::createMenu(QMenu *menu)
+{
+  if(menu == 0)
+  {
+    editMenu = new QMenu(this);
+    menu = editMenu;
+  }
+  
+  menu->addAction(
+#ifdef HAVE_ICONS
+    QIcon(":/images/undo.png"),
+#endif
+    tr("&Undo"),
+    edit,
+#if (QT_VERSION < QT_VERSION_CHECK(5,0,0))
+    SLOT(undo()),
+#else
+    &QPlainTextEdit::undo,
+#endif
+    QKeySequence::Undo
+    );
+  
+  menu->addAction(
+#ifdef HAVE_ICONS
+    QIcon(":/images/redo.png"),
+#endif
+    tr("&Redo"),
+    edit,
+#if (QT_VERSION < QT_VERSION_CHECK(5,0,0))
+    SLOT(redo()),
+#else
+    &QPlainTextEdit::redo,
+#endif
+    QKeySequence::Redo
+    );
+  
+  menu->addSeparator();
+  
+  menu->addAction(
+#ifdef HAVE_ICONS
+    QIcon(":/images/cut.png"),
+#endif
+    tr("Cu&t"),
+    edit,
+#if (QT_VERSION < QT_VERSION_CHECK(5,0,0))
+    SLOT(cut()),
+#else
+    &QPlainTextEdit::cut,
+#endif
+    QKeySequence::Cut
+    );
+  
+  menu->addAction(
+#ifdef HAVE_ICONS
+    QIcon(":/images/copy.png"),
+#endif
+    tr("&Copy"),
+    edit,
+#if (QT_VERSION < QT_VERSION_CHECK(5,0,0))
+    SLOT(copy()),
+#else
+    &QPlainTextEdit::copy,
+#endif
+    QKeySequence::Copy
+    );
+  
+  menu->addAction(
+#ifdef HAVE_ICONS
+    QIcon(":/images/paste.png"),
+#endif
+    tr("&Paste"),
+    edit,
+#if (QT_VERSION < QT_VERSION_CHECK(5,0,0))
+    SLOT(paste()),
+#else
+    &QPlainTextEdit::paste,
+#endif
+    QKeySequence::Paste
+    );
+  
+  menu->addAction(
+#ifdef HAVE_ICONS
+    QIcon(":/images/delete.png"),
+#endif
+    tr("Delete"),
+    this,
+#if (QT_VERSION < QT_VERSION_CHECK(5,0,0))
+    SLOT(editDelete())
+#else
+    &TextEdit::editDelete
+#endif
+    );
+  
+  menu->addAction(
+#ifdef HAVE_ICONS
+    QIcon(":/images/selectall.png"),
+#endif
+    tr("Select All"),
+    edit,
+#if (QT_VERSION < QT_VERSION_CHECK(5,0,0))
+    SLOT(selectAll()),
+#else
+    &QPlainTextEdit::selectAll,
+#endif
+    QKeySequence::SelectAll
+    );
+  
+  if(menu == editMenu)
+  {
+    QList<QAction*> acts = menu->actions();
+    
+    editActUndo      = acts.at(0);
+    editActRedo      = acts.at(1);
+    //separator      = acts.at(2);
+    editActCut       = acts.at(3);
+    editActCopy      = acts.at(4);
+    editActPaste     = acts.at(5);
+    editActDelete    = acts.at(6);
+    editActSelectAll = acts.at(7);
+  }
+}
+#endif // TEXTEDIT_MENU
 
 //--------------------------------------------------------------------
 
