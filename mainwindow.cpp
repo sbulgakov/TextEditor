@@ -218,6 +218,22 @@ void MainWindow::editReplace()
 
 void MainWindow::helpAbout()
 {
+  QString version;
+  
+  QString git_tag(GIT_TAG);
+  QString git_date(GIT_DATE);
+  QString git_hash(GIT_HASH);
+  QString git_abbr(GIT_ABBR);
+  
+  if(git_tag == git_hash)
+    version = "[" + git_hash + "@" + git_date + "]";
+  else if(git_tag != git_abbr)
+    version = git_abbr + " [" + git_hash + "@" + git_date + "]";
+  else
+    version = git_tag;
+  
+  version.append(" (" __DATE__ " " __TIME__ ")<br/>");
+  
   QMessageBox about;
   
   about.setTextFormat(Qt::RichText);
@@ -231,7 +247,7 @@ void MainWindow::helpAbout()
       "TextEditor is a simple application for editing text documents.<br/>"
       "<br/>"
       "&copy; 2024 Stanislav Bulgakov<br/>"
-      "" GIT_TAG " (" __DATE__ " " __TIME__ ")<br/>"
+      ) + version + tr(
       "<br/>"
       "Distributed freely under <a href='www.opensource.org/license/mit/'>The MIT License</a>.<br/>"
       "<br/>"

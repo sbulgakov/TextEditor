@@ -5,7 +5,10 @@ QT += core gui
 greaterThan(QT_MAJOR_VERSION, 4) QT += widgets
 
 DEFINES += \
-    GIT_TAG=\\\"$$system(git --git-dir $$PWD/.git --work-tree $$PWD describe --always --tags)\\\"
+    GIT_TAG=\\\"$$system(git --git-dir $$PWD/.git --work-tree $$PWD describe --always --tags)\\\" \
+    GIT_DATE=\\\"$$system(git --git-dir $$PWD/.git --work-tree $$PWD log -n1 --format=format:%as)\\\" \
+    GIT_HASH=\\\"$$system(git --git-dir $$PWD/.git --work-tree $$PWD log -n1 --format=format:%h)\\\" \
+    GIT_ABBR=\\\"$$system(git --git-dir $$PWD/.git --work-tree $$PWD describe --always --tags --abbrev=0)\\\"
 
 DEFINES += \
     FINDDIALOG_ALL \
