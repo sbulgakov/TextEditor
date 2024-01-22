@@ -13,6 +13,10 @@
 #include <QMenu>
 #endif
 
+#ifdef HAVE_SETTINGS
+#include "settings.h"
+#endif
+
 TextEdit::TextEdit(QWidget *parent) : QWidget(parent),
   pos(0), blockCount(0),
   findDialog(0)
@@ -23,11 +27,21 @@ TextEdit::TextEdit(QWidget *parent) : QWidget(parent),
   , undo(false), redo(false)
 #endif
 {
+#ifdef HAVE_SETTINGS
+  QFont fon = this->font();
+  fon.setPointSize(Settings::instance()->value("Editor/fontSize").toInt());
+  fon.setFamily(Settings::instance()->value("Editor/fontFamily").toString());
+  this->setFont(fon);
+#endif
   edit = new QPlainTextEdit(this);
   edit->setLineWrapMode(QPlainTextEdit::NoWrap);
   
   lineNumbers = new LineNumbers(this);
   lineNumbers->setNumbers(QStringList() << "1");
+#ifdef HAVE_SETTINGS
+  lineNumbers->setVisible(
+    Settings::instance()->value("Editor/showLineNumbers").toBool());
+#endif
   
   connect(edit,
 #if (QT_VERSION < QT_VERSION_CHECK(5,0,0))
@@ -133,6 +147,8 @@ TextEdit::~TextEdit()
 
 int TextEdit::lineNumbersWidth() const
 {
+  if(lineNumbers->isVisible() == false) return 0;
+  
   int max = 1;
   int num = qMax(1,edit->blockCount());
   

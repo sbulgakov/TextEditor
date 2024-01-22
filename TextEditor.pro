@@ -18,12 +18,17 @@ DEFINES += \
 DEFINES += \
     TEXTEDIT_MENU
 
+DEFINES += \
+    HAVE_SETTINGS
+
 SOURCES += main.cpp \
+    settings.cpp \
     mainwindow.cpp \
     finddialog.cpp \
     textedit.cpp
 
 HEADERS += \
+    settings.h \
     mainwindow.h \
     finddialog.h \
     textedit.h
