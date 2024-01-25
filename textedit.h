@@ -14,6 +14,7 @@ class FindResults;
 class QMenu;
 class QAction;
 #endif
+class QSyntaxHighlighter;
 class QTextCursor;
 
 class TextEdit : public QWidget
@@ -43,6 +44,8 @@ class TextEdit : public QWidget
     bool undo;
     bool redo;
 #endif
+    
+    QSyntaxHighlighter *highlighter;
     
 public:
     TextEdit(QWidget *parent = 0);
@@ -87,6 +90,10 @@ private slots:
     void editCanRedo(bool yes);
 #endif
 
+#ifdef HAVE_HUNSPELL
+    void correctWord();
+#endif
+
 protected:
     void resizeEvent(QResizeEvent *event);
     
@@ -94,6 +101,24 @@ protected:
 private:
     void createMenu(QMenu *menu);
 #endif
+};
+
+//--------------------------------------------------------------------
+
+#include <QTextBlockUserData>
+
+class TextBlockUserData: public QTextBlockUserData
+{
+    TextBlockUserData *next;
+    ushort             type;
+    
+public:
+    TextBlockUserData();
+    TextBlockUserData(ushort type);
+   ~TextBlockUserData();
+    
+    void append(TextBlockUserData* data);
+    TextBlockUserData* find(ushort type);
 };
 
 //--------------------------------------------------------------------

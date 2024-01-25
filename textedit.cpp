@@ -17,6 +17,10 @@
 #include "settings.h"
 #endif
 
+#ifdef HAVE_HUNSPELL
+#include "hunspellhighlighter.h"
+#endif
+
 TextEdit::TextEdit(QWidget *parent) : QWidget(parent),
   pos(0), blockCount(0),
   findDialog(0)
@@ -26,6 +30,7 @@ TextEdit::TextEdit(QWidget *parent) : QWidget(parent),
 #ifdef TEXTEDIT_MENU
   , undo(false), redo(false)
 #endif
+  , highlighter(0)
 {
 #ifdef HAVE_SETTINGS
   QFont fon = this->font();
@@ -138,6 +143,10 @@ TextEdit::TextEdit(QWidget *parent) : QWidget(parent),
 #endif // TEXTEDIT_MENU
   
   highlightCurrentLine();
+  
+#ifdef HAVE_HUNSPELL
+  highlighter = new HunspellHighlighter(edit->document());
+#endif
 }
 
 TextEdit::~TextEdit()
@@ -555,9 +564,60 @@ void TextEdit::editMenuRequested(const QPoint& pos)
 {
   updateStandardContextMenu(editMenu);
   
+  QMenu *menu = editMenu;
+  
+#ifdef HAVE_HUNSPELL
+  HunspellHighlighter *hunspellHighlighter = 
+    qobject_cast<HunspellHighlighter*>(highlighter);
+  if(hunspellHighlighter)
+  {
+    QTextCursor cur = edit->textCursor();
+    TextBlockUserData *userData = 
+      static_cast<TextBlockUserData*>(edit->textCursor().block().userData());
+    HunspellBlockData *data = 0;
+    if(userData)       data = static_cast<HunspellBlockData*>(userData->find(1));
+    if(data && !cur.hasSelection())
+    {
+      const QStringList& words = data->words();
+      
+      cur.select(QTextCursor::WordUnderCursor);
+      QString word = cur.selectedText();
+      
+      if(words.indexOf(word) != -1)
+      {
+        QStringList suggestions = hunspellHighlighter->suggestions(word);
+        
+        menu = new QMenu();
+#if (QT_VERSION < QT_VERSION_CHECK(5,0,0))
+        foreach (const QString& sugg, suggestions) {
+#else
+        for(const QString& sugg : suggestions) {
+#endif
+          menu->addAction(sugg,
+                          this,
+#if (QT_VERSION < QT_VERSION_CHECK(5,0,0))
+                          SLOT(correctWord()));
+#else
+                          &TextEdit::correctWord);
+#endif
+        }
+        menu->addSeparator();
+#if (QT_VERSION < QT_VERSION_CHECK(5,0,0))
+        foreach (QAction *action, editMenu->actions()) {
+#else
+        for(QAction *action : editMenu->actions()) {
+#endif
+          menu->insertAction(0, action);
+        }
+        menu->deleteLater();
+      }
+    }
+  }
+#endif
+  
   QPoint p = mapToGlobal(pos);
   p.setX(p.x()+lineNumbers->width());
-  editMenu->exec(p);
+  menu->exec(p);
 }
 
 void TextEdit::editDelete()
@@ -575,6 +635,21 @@ void TextEdit::editCanRedo(bool yes)
   redo = yes;
 }
 #endif // TEXTEDIT_MENU
+
+#ifdef HAVE_HUNSPELL
+void TextEdit::correctWord()
+{
+  QAction *word = qobject_cast<QAction*>(sender());
+  
+  if(word)
+  {
+    QTextCursor cur = edit->textCursor();
+    
+    cur.select(QTextCursor::WordUnderCursor);
+    cur.insertText(word->text());
+  }
+}
+#endif
 
 void TextEdit::resizeEvent(QResizeEvent *event)
 {
@@ -710,6 +785,61 @@ void TextEdit::createMenu(QMenu *menu)
   }
 }
 #endif // TEXTEDIT_MENU
+
+//--------------------------------------------------------------------
+
+TextBlockUserData::TextBlockUserData()
+  : next(0), type(0)
+{
+
+}
+
+TextBlockUserData::TextBlockUserData(ushort type)
+  : next(0), type(type)
+{
+
+}
+
+TextBlockUserData::~TextBlockUserData()
+{
+  TextBlockUserData *cur = next;
+  
+  while(cur)
+  {
+    TextBlockUserData *tmp = cur;
+    cur = cur->next;
+    delete tmp;
+  }
+}
+
+void TextBlockUserData::append(TextBlockUserData* data)
+{
+  TextBlockUserData *cur = next;
+  
+  while(cur->next)
+  {
+    cur = cur->next;
+  }
+  cur->next = data;
+}
+
+TextBlockUserData* TextBlockUserData::find(ushort type)
+{
+  TextBlockUserData *ret = 0;
+  TextBlockUserData *cur = this;
+  
+  while(cur)
+  {
+    if(cur->type == type)
+    {
+      ret = cur;
+      break;
+    }
+    cur = cur->next;
+  }
+  
+  return ret;
+}
 
 //--------------------------------------------------------------------
 

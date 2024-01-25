@@ -284,6 +284,10 @@ void MainWindow::helpAbout()
         "<a href='www.flaticon.com/authors/super-basic-orbit/outline'>"
         "Super Basic Orbit Outline</a> style."
 #endif
+#ifdef HAVE_HUNSPELL
+      "<br/>"
+      "Spell checking is based on <a href='hunspell.github.io'>Hunspell</a> by Laszlo Nemeth."
+#endif
       )
   );
   

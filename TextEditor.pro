@@ -15,6 +15,8 @@ DEFINES += \
     FINDDIALOG_REPLACE \
     FINDDIALOG_RESULTS
 
+CONFIG += hunspell
+
 DEFINES += \
     TEXTEDIT_MENU
 
@@ -43,4 +45,16 @@ icons {
         icons-edit.qrc \
         icons-find.qrc \
         icons-help.qrc
+}
+
+win32:hunspell {
+    DEPENDPATH += ../TextEditor/hunspell
+    INCLUDEPATH += ../TextEditor/hunspell/src/
+    LIBS += -L../TextEditor/hunspell/lib
+}
+hunspell {
+    DEFINES += HAVE_HUNSPELL
+    LIBS += -lhunspell
+    SOURCES += hunspellhighlighter.cpp
+    HEADERS += hunspellhighlighter.h
 }
