@@ -158,7 +158,7 @@ int TextEdit::lineNumbersWidth() const
 {
   if(lineNumbers->isVisible() == false) return 0;
   
-  int max = 1;
+  int max = 0;
   int num = qMax(1,edit->blockCount());
   
   while(num)
@@ -168,12 +168,15 @@ int TextEdit::lineNumbersWidth() const
   }
   
 #if (QT_VERSION < QT_VERSION_CHECK(5,0,0))
-  int wid = 3 + fontMetrics().width(QLatin1Char('9')) * max;
+  int wid =     fontMetrics().width(QLatin1Char('9')) * max;
 #else
-  int wid = 3 + fontMetrics().horizontalAdvance(QLatin1Char('9')) * max;
+  int wid =     fontMetrics().horizontalAdvance(QLatin1Char('9')) * max;
 #endif
   
-  return wid;
+  int margins = lineNumbers->getLeftMargin() + 
+                lineNumbers->getRightMargin();
+  
+  return wid + margins;
 }
 
 #ifdef TEXTEDIT_MENU
@@ -854,6 +857,11 @@ void LineNumbers::setNumbers(const QStringList& numbers)
   this->numbers = numbers;
 }
 
+const QStringList& LineNumbers::getNumbers() const
+{
+  return numbers;
+}
+
 int LineNumbers::getScroll() const
 {
   return scroll;
@@ -864,13 +872,24 @@ void LineNumbers::setScroll(int scroll)
   this->scroll = scroll;
 }
 
+int LineNumbers::getLeftMargin()
+{
+  return 3;
+}
+
+int LineNumbers::getRightMargin()
+{
+  return 3;
+}
+
 void LineNumbers::paintEvent(QPaintEvent *event)
 {
   Q_UNUSED(event)
   
   QPainter p(this);
   
-  int wd  = width();
+  int rt  = getRightMargin();
+  int wd  = width() - rt;
   int ht  = fontMetrics().height();
   int top = 3 + 2
 #ifdef Q_OS_WIN

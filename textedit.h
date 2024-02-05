@@ -131,10 +131,14 @@ class LineNumbers: public QWidget
     
 public:
     LineNumbers(TextEdit *parent = 0);
-    void setNumbers(const QStringList& numbers);
+    virtual void  setNumbers(const QStringList& numbers);
+    virtual const QStringList& getNumbers() const;
     
-    inline int  getScroll() const;
-    inline void setScroll(int scroll);
+    virtual int   getScroll() const;
+    virtual void  setScroll(int scroll);
+    
+    virtual int   getLeftMargin();
+    virtual int   getRightMargin();
     
 protected:
     void paintEvent(QPaintEvent *event);
