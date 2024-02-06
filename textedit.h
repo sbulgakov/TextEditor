@@ -47,6 +47,8 @@ class TextEdit : public QWidget
     
     QSyntaxHighlighter *highlighter;
     
+    QWidget *screen;
+    
 public:
     TextEdit(QWidget *parent = 0);
    ~TextEdit();
@@ -139,6 +141,22 @@ public:
     
     virtual int   getLeftMargin();
     virtual int   getRightMargin();
+    
+protected:
+    void paintEvent(QPaintEvent *event);
+};
+
+//--------------------------------------------------------------------
+
+class EditScreen: public QWidget
+{
+    QPlainTextEdit *edit;
+    
+    bool spaces;
+    bool tabulators;
+    
+public:
+    EditScreen(TextEdit *parent, QPlainTextEdit *component);
     
 protected:
     void paintEvent(QPaintEvent *event);

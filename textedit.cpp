@@ -41,6 +41,9 @@ TextEdit::TextEdit(QWidget *parent) : QWidget(parent),
   edit = new QPlainTextEdit(this);
   edit->setLineWrapMode(QPlainTextEdit::NoWrap);
   
+  screen = new EditScreen(this, edit);
+  screen->setAttribute(Qt::WA_TransparentForMouseEvents, true);
+  
   lineNumbers = new LineNumbers(this);
   lineNumbers->setNumbers(QStringList() << "1");
 #ifdef HAVE_SETTINGS
@@ -662,6 +665,8 @@ void TextEdit::resizeEvent(QResizeEvent *event)
   size.setWidth(size.width()-wid);
   edit->resize(size);
   edit->move(wid,0);
+  screen->resize(size);
+  screen->move(wid,0);
   lineNumbers->resize(wid,size.height());
 }
 
@@ -904,5 +909,88 @@ void LineNumbers::paintEvent(QPaintEvent *event)
 #endif
     p.drawText(0,top,wd,ht,Qt::AlignRight,num);
     top += ht;
+  }
+}
+
+//--------------------------------------------------------------------
+
+EditScreen::EditScreen(TextEdit *parent, QPlainTextEdit *component)
+  : QWidget(parent), edit(component)
+  , spaces(false), tabulators(true)
+{
+#ifdef HAVE_SETTINGS
+  spaces     = Settings::instance()->value("Editor/showSpaces").toBool();
+  tabulators = Settings::instance()->value("Editor/showTabulators").toBool();
+#endif
+}
+
+void EditScreen::paintEvent(QPaintEvent *event)
+{
+  Q_UNUSED(event)
+  
+  if(!(spaces||tabulators)) return;
+  
+  QPainter p(this);
+  
+  QTextBlock b = edit->document()->findBlockByLineNumber(0);
+  
+#if (QT_VERSION < QT_VERSION_CHECK(5,0,0))
+  int spacewidth = edit->fontMetrics().width(QLatin1Char(' '));
+#else
+  int spacewidth = edit->fontMetrics().horizontalAdvance(QLatin1Char(' '));
+#endif
+  int tabwidth   = edit->tabStopWidth();
+  
+  int w;
+  
+  while(b.isValid())
+  {
+    QString t = b.text();
+    QTextCursor c = edit->textCursor();
+    
+    bool hasselection = c.hasSelection();
+    int  selectionbeg = -1;
+    int  selectionend = -1;
+    if(hasselection)
+    {
+      selectionbeg = c.selectionStart();
+      selectionend = c.selectionEnd();
+    }
+    
+    c.setPosition(b.position());
+    for(int i=0; i<t.size(); ++i)
+    {
+      if(t.at(i) == ' ' && spaces)
+      {
+        if(hasselection && c.position() < selectionend && c.position() >= selectionbeg)
+             p.setPen(edit->palette().highlightedText().color());
+        else p.setPen(edit->palette().text().color());
+        
+        w = spacewidth;
+        QRect r = edit->cursorRect(c);
+        p.drawLine(r.left()+2, r.bottom()-4, r.left()+2,   r.bottom());
+        p.drawLine(r.left()+2, r.bottom(),   r.left()+w-1, r.bottom());
+        p.drawLine(r.left()+w, r.bottom(),   r.left()+w,   r.bottom()-4);
+      }
+      else if(t.at(i) == '\t' && tabulators)
+      {
+        if(hasselection && c.position() < selectionend && c.position() >= selectionbeg)
+             p.setPen(edit->palette().highlightedText().color());
+        else p.setPen(edit->palette().text().color());
+        
+        QRect r = edit->cursorRect(c);
+        QTextCursor n(c);
+        
+        if(n.movePosition(QTextCursor::Right))
+             w = edit->cursorRect(n).left() - r.left();
+        else w = tabwidth;
+        
+        p.drawLine(r.left()+w-4, r.top()+r.height()/1.75-4, r.left()+w, r.top()+r.height()/1.75);
+        p.drawLine(r.left()+2,   r.top()+r.height()/1.75,   r.left()+w, r.top()+r.height()/1.75);
+        p.drawLine(r.left()+w-4, r.top()+r.height()/1.75+4, r.left()+w, r.top()+r.height()/1.75);
+      }
+      c.movePosition(QTextCursor::Right);
+    }
+    b = b.next();
   }
 }

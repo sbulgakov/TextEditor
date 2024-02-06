@@ -10,6 +10,8 @@ Settings::Settings()
   values.insert("Editor/fontSize", 8);
   values.insert("Editor/fontFamily", "Sans");
   values.insert("Editor/showLineNumbers", true);
+  values.insert("Editor/showSpaces", false);
+  values.insert("Editor/showTabulators", false);
 }
 
 Settings::Settings(const Settings& o)
