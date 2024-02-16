@@ -1,11 +1,11 @@
 #ifndef HUNSPELLHIGHLIGHTER_H
 #define HUNSPELLHIGHLIGHTER_H
 
-#include <QSyntaxHighlighter>
+#include "highlighter.h"
 
 class Hunspell;
 
-class HunspellHighlighter: public QSyntaxHighlighter
+class HunspellHighlighter: public Highlighter
 {
     Q_OBJECT
     
@@ -14,9 +14,11 @@ class HunspellHighlighter: public QSyntaxHighlighter
     QStringList dicts;
     
 public:
+    HunspellHighlighter(QObject *parent = 0);
     HunspellHighlighter(QTextDocument *document);
    ~HunspellHighlighter();
     
+    bool spell(const QString& word);
     QStringList suggestions(const QString& word);
     
     const QStringList& dictionaries() const;
@@ -24,6 +26,9 @@ public:
     
 protected:
     void highlightBlock(const QString &text);
+    
+private:
+    void init();
 };
 
 //--------------------------------------------------------------------

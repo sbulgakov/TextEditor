@@ -14,7 +14,7 @@ class FindResults;
 class QMenu;
 class QAction;
 #endif
-class QSyntaxHighlighter;
+class Highlighter;
 class QTextCursor;
 
 class TextEdit : public QWidget
@@ -45,7 +45,7 @@ class TextEdit : public QWidget
     bool redo;
 #endif
     
-    QSyntaxHighlighter *highlighter;
+    Highlighter *highlighter;
     
     QWidget *screen;
     

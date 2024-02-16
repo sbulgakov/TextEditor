@@ -148,7 +148,8 @@ TextEdit::TextEdit(QWidget *parent) : QWidget(parent),
   highlightCurrentLine();
   
 #ifdef HAVE_HUNSPELL
-  highlighter = new HunspellHighlighter(edit->document());
+  highlighter = new HunspellHighlighter(this);
+  highlighter->setDocument(edit->document());
 #endif
 }
 

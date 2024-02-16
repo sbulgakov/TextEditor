@@ -9,9 +9,23 @@
 #include <QFileInfo>
 #include <QLocale>
 
-HunspellHighlighter::HunspellHighlighter(QTextDocument *document)
-  : QSyntaxHighlighter(document),
+HunspellHighlighter::HunspellHighlighter(QObject *parent)
+  : Highlighter(parent),
   hunspell(0), codec(0)
+{
+  setObjectName("Highlighter:Hunspell");
+  init();
+}
+
+HunspellHighlighter::HunspellHighlighter(QTextDocument *document)
+  : Highlighter(document),
+  hunspell(0), codec(0)
+{
+  setObjectName("Highlighter:Hunspell");
+  init();
+}
+
+void HunspellHighlighter::init()
 {
   if(QFileInfo("hunspell").isDir())
   {
@@ -50,6 +64,29 @@ HunspellHighlighter::~HunspellHighlighter()
   }
 }
 
+bool HunspellHighlighter::spell(const QString& word)
+{
+  bool correct = false;
+  
+  if(hunspell)
+  {
+    correct = hunspell->spell(std::string(codec->fromUnicode(word).constData()));
+  }
+  QList<HunspellHighlighter*> children = findChildren<HunspellHighlighter*>();
+  if(children.size())
+  {
+#if (QT_VERSION < QT_VERSION_CHECK(5,0,0))
+    foreach (HunspellHighlighter *child, children) {
+#else
+    for(HunspellHighlighter *child : children) {
+#endif
+      correct |= child->spell(word);
+    }
+  }
+  
+  return correct;
+}
+
 QStringList HunspellHighlighter::suggestions(const QString& word)
 {
   QStringList list;
@@ -62,6 +99,17 @@ QStringList HunspellHighlighter::suggestions(const QString& word)
     for(size_t i = 0; i < sugg.size(); ++i)
     {
       list.append(codec->toUnicode(sugg[i].data(),sugg[i].size()));
+    }
+  }
+  QList<HunspellHighlighter*> children = findChildren<HunspellHighlighter*>();
+  if(children.size())
+  {
+#if (QT_VERSION < QT_VERSION_CHECK(5,0,0))
+    foreach (HunspellHighlighter *child, children) {
+#else
+    for(HunspellHighlighter *child : children) {
+#endif
+      list.append(child->suggestions(word));
     }
   }
   
@@ -102,6 +150,11 @@ bool HunspellHighlighter::setDictionary(const QString& name)
 
 void HunspellHighlighter::highlightBlock(const QString &text)
 {
+  bool chain = false;
+  if(parent())
+  {
+    if(parent()->objectName().startsWith("Highlighter:Hunspell")) chain = true;
+  }
   if(hunspell)
   {
     TextBlockUserData *userData = 
@@ -114,12 +167,43 @@ void HunspellHighlighter::highlightBlock(const QString &text)
       if(userData) userData->append(data);
       else  setCurrentBlockUserData(data);
     }
-    else
+    else if(!chain)
       data->clear();
     
     QTextCharFormat fmt;
     fmt.setUnderlineColor(QColor("red"));
     fmt.setUnderlineStyle(QTextCharFormat::SpellCheckUnderline);
+    
+    if(chain)
+    {
+      fmt.setUnderlineStyle(QTextCharFormat::NoUnderline);
+      QStringList words = data->words();
+      words.removeDuplicates();
+      
+      QStringList::Iterator i = words.begin();
+      while(i != words.end())
+      {
+        bool corr = hunspell->spell(std::string(codec->fromUnicode(*i).constData()));
+        if(corr)
+        {
+          QString word(*i);
+          i = words.erase(i);
+          int len = word.length();
+          int pos = 0;
+          while((pos = text.indexOf(word, pos)) != -1)
+          {
+            setFormat(pos, len, fmt);
+            pos += len;
+          }
+          continue;
+        }
+        ++i;
+      }
+      data->clear();
+      for(int i = 0; i < words.size(); ++i) data->insert(words.at(i));
+      
+      return;
+    }
     
     QRegExp word("(\\w+)");
     

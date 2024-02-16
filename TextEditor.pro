@@ -27,12 +27,14 @@ SOURCES += main.cpp \
     settings.cpp \
     mainwindow.cpp \
     finddialog.cpp \
+    highlighter.cpp \
     textedit.cpp
 
 HEADERS += \
     settings.h \
     mainwindow.h \
     finddialog.h \
+    highlighter.h \
     textedit.h
 
 RESOURCES += \
